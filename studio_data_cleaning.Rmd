@@ -1,0 +1,115 @@
+---
+title: "final_project_405_datacleaning+pie_chart+ANOVA"
+author: "Sijia Wu"
+date: "2025-04-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+
+movies <- read_csv("movies.csv")
+studios <- read_csv("studios.csv")
+
+movies_clean <- movies %>%
+  select(id, name, date, rating) %>%
+  filter(!is.na(rating), !is.na(date)) %>%
+  filter(rating >= 0, rating <= 10)
+
+studios_clean <- studios %>%
+  select(id, studio) %>%
+  filter(!is.na(studio))
+
+studios_clean
+
+merged_data <- movies_clean %>%
+  inner_join(studios_clean, by = "id") %>%
+  distinct()
+
+
+merged_data <- merged_data %>%
+  filter(date >= 2014, date <= 2024)
+
+
+studio_total_rating <- merged_data %>%
+  group_by(studio) %>%
+  summarise(total_rating = sum(rating), .groups = "drop") %>%
+  arrange(desc(total_rating))
+
+
+top10_studios <- studio_total_rating %>%
+  slice_head(n = 10) %>%
+  pull(studio)
+
+top10_movies <- merged_data %>%
+  filter(studio %in% top10_studios)
+
+
+write_csv(top10_movies, "top10_movies.csv")
+top10_movies
+
+```
+
+
+```{r}
+aov_model <- aov(rating ~ studio * date, data = top10_movies)
+summary(aov_model)
+
+
+TukeyHSD(aov_model, "studio")
+```
+
+
+```{r}
+
+library(tidyverse)
+
+movies <- read_csv("movies.csv")
+studios <- read_csv("studios.csv")
+
+movies_clean <- movies %>%
+  select(id, name, date, rating) %>%
+  filter(!is.na(rating), !is.na(date), rating >= 0, rating <= 10)
+
+studios_clean <- studios %>%
+  select(id, studio) %>%
+  filter(!is.na(studio))
+
+merged_data <- movies_clean %>%
+  inner_join(studios_clean, by = "id") %>%
+  distinct() %>%
+  filter(date >= 2014, date <= 2024)
+
+studio_movie_counts <- merged_data %>%
+  group_by(studio) %>%
+  summarise(movie_count = n(), .groups = "drop") %>%
+  arrange(desc(movie_count)) %>%
+  slice_head(n = 15)
+
+studio_movie_counts <- studio_movie_counts %>%
+  mutate(range_group = case_when(
+    movie_count < 180 ~ "150–179 movies",
+    movie_count < 210 ~ "180–209 movies",
+    movie_count < 240 ~ "210–239 movies",
+    TRUE ~ "240+ movies"
+  ))
+
+studio_movie_counts <- studio_movie_counts %>%
+  mutate(ypos = cumsum(movie_count) - 0.5 * movie_count)
+
+ggplot(studio_movie_counts, aes(x = "", y = movie_count, fill = range_group)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  coord_polar("y") +
+  geom_text(aes(label = studio, y = ypos), color = "black", size = 3) +
+  labs(title = "Top 15 Studios by Movie Count (Grouped by Range)",
+       fill = "Movie Count Range") +
+  theme_void() +
+  theme(legend.position = "right")
+
+
+```
+
