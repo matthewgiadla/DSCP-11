@@ -1,0 +1,38 @@
+---
+title: "graph_rating"
+author: "Sijia Wu"
+date: "2025-04-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+library(tidyverse)
+library(plotly)
+
+files <- list.files(pattern = "_out\\.csv$")
+combined <- map_dfr(files, read_csv)
+
+combined <- combined %>%
+  mutate(date = as.integer(date),
+         studio = as.factor(studio))
+
+p <- ggplot(combined, aes(x = date, y = avg_rating, color = studio)) +
+  geom_line(size = 1) +
+  geom_point() +
+  labs(title = "Yearly Average Ratings for Top 10 Studios",
+       x = "Year", y = "Average Rating") +
+  theme_minimal()
+
+
+interactive_plot <- ggplotly(p)
+
+
+htmlwidgets::saveWidget(interactive_plot, "studio_rating_trends_grouped_plotly.html")
+
+
+```
