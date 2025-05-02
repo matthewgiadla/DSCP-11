@@ -1,0 +1,26 @@
+
+# Submit file to run studio analysis in R with CHTC container
+
+universe = vanilla
++ProjectName = "dscp"
+
+# CHTC container with R + tidyverse + FITSio
+container_image = osdf:///ospool/uc-shared/public/OSG-Staff/xalim_stat/R_tidyverse_FITSio.sif
+
+executable = analyze_studios.sh
+
+# Transfer R script and any data files it reads directly
+transfer_input_files = analyze_studios.R, movies.csv, studios.csv, releases.csv, actors.csv, crew.csv
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+
+request_cpus = 1
+request_memory = 4GB
+request_disk = 2GB
+
+output = output/studio_$(Cluster).out
+error  = error/studio_$(Cluster).err
+log    = log/studio_$(Cluster).log
+
+queue
