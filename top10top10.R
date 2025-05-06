@@ -15,10 +15,6 @@ for (stu in studios) {
     len = nrow(studio_data)
   }
   for (i in 1:len) {
-    library(magick)
-    library(tidyverse)
-    library(patchwork)
-    
     rank = i
     mv_name = studio_data$name[i]
     year = studio_data$date[i]
